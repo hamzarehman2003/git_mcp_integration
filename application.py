@@ -1,32 +1,21 @@
 from fastapi import FastAPI, Request
-import os
-from dotenv import load_dotenv
-from openai import OpenAI
-
-# load API key
-load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-OPENAI_CLIENT = OpenAI(api_key=OPENAI_API_KEY)
+from agent import ask_agent
+import uvicorn
 
 application = FastAPI()
 
 
 @application.post("/chat")
 async def chat(request: Request):
-    data = await request.json()
-    user_message = data.get("message", "")
-
-    if not user_message:
+    body = await request.json()
+    user_msg = body.get("message")
+    if not user_msg:
         return {"error": "No message provided"}
 
-    # call OpenAI Responses API
-    response = OPENAI_CLIENT.chat.completions.create(
-        model="gpt-4o-mini",   # or gpt-4o, gpt-3.5-turbo, etc.
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": user_message}
-        ]
-    )
+    # Call the agent
+    response = await ask_agent(user_msg)
+    return {"response": response}
 
-    bot_reply = response.choices[0].message.content
-    return {"response": bot_reply}
+
+if __name__ == "__main__":
+    uvicorn.run("application:application", host="127.0.0.1", port=8000, reload=True)
