@@ -31,4 +31,5 @@ async def ask_agent(user_message: str) -> str:
         )
 
         result = await Runner.run(agent, user_message)
+        print("skbsd")
         return result.final_output
